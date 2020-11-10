@@ -1,18 +1,43 @@
 //alert("game code started!");
 
+var dotX = 0;
+var dotY = 0;
+var visibleCanvas = null;
+var context = null;
+var dotImage = null;
+
 document.addEventListener("DOMContentLoaded", function(event) {
     visibleCanvas = document.getElementById('game');
     visibleCanvas.style.backgroundColor = "red";
     document.addEventListener("keydown", move);
+    context = visibleCanvas.getContext('2d');
+    dotImage = new Image();
+    dotImage.src = 'dot.png';
+    dotImage.onload = function() {
+        context.drawImage(dotImage, dotX, dotY);
+    }
 });
 
 function move(event) {
     switch (event.key) {
         case "ArrowUp":
-            visibleCanvas.style.backgroundColor = "blue";
+            // visibleCanvas.style.backgroundColor = "blue";
+            dotY -= 10;
             break;
         case "ArrowDown":
-            visibleCanvas.style.backgroundColor = "green";
+            // visibleCanvas.style.backgroundColor = "green";
+            dotY += 10;
+            break;
+        case "ArrowLeft":
+            // visibleCanvas.style.backgroundColor = "yellow";
+            dotX -= 10;
+            break;
+        case "ArrowRight":
+            // visibleCanvas.style.backgroundColor = "purple";
+            dotX += 10;
             break;
     }
+    context.clearRect(0, 0, visibleCanvas.width, visibleCanvas.height);
+    context.drawImage(dotImage, dotX, dotY);
+    event.preventDefault(); // prevents arrows from scrolling
 }
