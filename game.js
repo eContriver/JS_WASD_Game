@@ -1,4 +1,4 @@
-//alert("game code started!");
+// Copyright (c) 2020 eContriver LLC
 
 var dotX = 0;
 var dotY = 0;
@@ -21,19 +21,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 function move(event) {
     switch (event.key) {
         case "ArrowUp":
-            // visibleCanvas.style.backgroundColor = "blue";
             dotY -= 10;
             break;
         case "ArrowDown":
-            // visibleCanvas.style.backgroundColor = "green";
             dotY += 10;
             break;
         case "ArrowLeft":
-            // visibleCanvas.style.backgroundColor = "yellow";
             dotX -= 10;
             break;
         case "ArrowRight":
-            // visibleCanvas.style.backgroundColor = "purple";
             dotX += 10;
             break;
     }
