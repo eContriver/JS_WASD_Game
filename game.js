@@ -1,24 +1,32 @@
 // Copyright (c) 2020 eContriver LLC
 
-var dotX = 0;
-var dotY = 0;
+var dotXWorld = 0;
+var dotYWorld = 0;
 var visibleCanvas = null;
 var context = null;
 var dotImage = null;
+var minYWorld = 0;
+var maxYWorld = 640 * 80;
+var minXWorld = 0;
+var maxXWorld = 1040 * 80;
 
 // document.addEventListener("DOMContentLoaded" - the whole document (HTML) has been loaded.
 // window.addEventListener("load" - the whole document and its resources (e.g. images, iframes, scripts) have been loaded.
 //   i.e. window.onload
 document.addEventListener("DOMContentLoaded", function(event) {
-    loadScript("seedRandom.js");
+    loadScript("seedrandom.js");
     visibleCanvas = document.getElementById('game');
     visibleCanvas.style.backgroundColor = "lightgray";
+    dotYWorld = (minYWorld + 320);
+    dotXWorld = (minXWorld + 520);
+    // dotYWorld = (maxYWorld - 320);
+    // dotXWorld = (maxXWorld - 520);
     document.addEventListener("keydown", move);
     context = visibleCanvas.getContext('2d');
     dotImage = new Image();
     dotImage.src = 'dot.png';
     dotImage.onload = function() {
-        context.drawImage(dotImage, dotX, dotY);
+        context.drawImage(dotImage, dotXWorld, dotYWorld);
     }
 });
 
@@ -31,47 +39,75 @@ function loadScript(file) {
 
 function move(event) {
     context.clearRect(0, 0, visibleCanvas.width, visibleCanvas.height);
+    var movementAmount = 10;
     switch (event.key) {
         case "w":
-            dotY -= 10;
+            dotYWorld -= movementAmount;
             break;
         case "s":
-            dotY += 10;
+            dotYWorld += movementAmount;
             break;
         case "a":
-            dotX -= 10;
+            dotXWorld -= movementAmount;
             break;
         case "d":
-            dotX += 10;
+            dotXWorld += movementAmount;
             break;
     }
-    generateRandom();
-    context.drawImage(dotImage, dotX, dotY);
+    dotYWorld = (dotYWorld + dotImage.height > maxYWorld) ? maxYWorld - dotImage.height : dotYWorld;
+    dotYWorld = (dotYWorld < minYWorld) ? minYWorld : dotYWorld;
+    dotXWorld = (dotXWorld + dotImage.width > maxXWorld) ? maxXWorld - dotImage.width : dotXWorld;
+    dotXWorld = (dotXWorld < minXWorld) ? minXWorld : dotXWorld;
+    var canvasYWorld = dotYWorld - (visibleCanvas.height / 2);
+    var canvasXWorld = dotXWorld - (visibleCanvas.width / 2);
+    var dotXCanvas = visibleCanvas.width / 2;
+    var dotYCanvas = visibleCanvas.height / 2;
+    if (canvasYWorld < minYWorld) {
+        dotYCanvas += (canvasYWorld - minYWorld);
+        canvasYWorld = minYWorld;
+    }
+    if ((canvasYWorld + visibleCanvas.height) > maxYWorld) {
+        dotYCanvas += visibleCanvas.height - (maxYWorld - canvasYWorld);
+        canvasYWorld = maxYWorld - visibleCanvas.height;
+    }
+    if (canvasXWorld < minXWorld) {
+        dotXCanvas += (canvasXWorld - minXWorld);
+        canvasXWorld = minXWorld;
+    }
+    if ((canvasXWorld + visibleCanvas.width) > maxXWorld) {
+        dotXCanvas += visibleCanvas.width - (maxXWorld - canvasXWorld);
+        canvasXWorld = maxXWorld - visibleCanvas.width;
+    }
+    generateRandom(canvasXWorld, canvasXWorld + visibleCanvas.width, canvasYWorld, canvasYWorld + visibleCanvas.height);
+    console.log("Moving to: " + dotXWorld + "," + dotYWorld);
+    context.drawImage(dotImage, dotXCanvas, dotYCanvas);
     event.preventDefault(); // prevents arrows from scrolling
 }
 
-function generateRandom() {
-    console.time(generateRandom.name)
-    var scaleFactor = 80; 
-    for (var x = 0; x < visibleCanvas.width; x += scaleFactor) {
-        for (var y = 0; y < visibleCanvas.height; y += scaleFactor) {
+function generateRandom(xStart, xEnd, yStart, yEnd) {
+    // console.time(generateRandom.name)
+    for (var x = xStart; x < xEnd; x += 1) {
+        for (var y = yStart; y < yEnd; y += 1) {
+            var scaleFactor = 80; 
+            if ((x % scaleFactor) != 0) continue;
+            if ((y % scaleFactor) != 0) continue;
             // Implementation 1: using ANSI C rand (42ms for 600,000 and not very random)
-            // var rand = PRNG(x << 16 + y) % 255;
+            // var rand = PRNG(x << 16 + y) % 256; // we use modulo 256 because 255 would produe a 0 for 255 (i.e. 0-254), we want 0-255
 
             // Implementation 2: using seedrandom.js (3100ms for 600,000 and very random)
             Math.seedrandom(x + ',' + y);
             var rand = (Math.random() * Number.MAX_SAFE_INTEGER) >>> 0; // shift by 0 truncates decimal
 
-            // if ((rand % 255) < 240) continue;
-            var r = (rand >>> 8) % 255;
-            var g = (rand >>> 16) % 255;
-            var b = (rand >>> 24) % 255;
-            var size = (rand >>> 3) % scaleFactor;
+            if ((rand % 10) > 1) continue;
+            var r = ((rand >>> 0) % 2) * 255;
+            var g = ((rand >>> 1) % 2) * 255;
+            var b = ((rand >>> 2) % 2) * 255;
+            var size = (scaleFactor * (((rand >>> 3) % 4) + 1)) / 4;
             var a = 255;
-            colorPixel2(x, y, size, r, g, b, a);
+            colorPixel2(x-xStart, y-yStart, size, r, g, b, a);
         }
     }
-    console.timeEnd(generateRandom.name)
+    // console.timeEnd(generateRandom.name)
 }
 
 function PRNG(seed) { 
