@@ -10,7 +10,13 @@ const ImageAssets = Object.freeze({
     'dot': 'dot.png',
 });
 
-// TODO: Create Asset class the uses Promise
+// TODO: Switch to TypeScript so we can use types and have interfaces
+// TODO: Add Multi-layer support and separate draw from move logic
+// TODO: Add a GraphicalUserInterface which draws on a layer and accepts inputs
+// TODO: Add Box2D integration for physics
+// TODO: Add Server / Client setup
+
+// TODO: Create Asset class the uses Promise - https://web.dev/promises/
 class AssetMgr {
     constructor() {
         this.imagesPending = [];
@@ -109,6 +115,7 @@ class Point {
     }
 }
 
+// TODO: This is to become an interface and something like Character will implement it
 class Entity {
     constructor() {
         this.location = new Point(0, 0);
@@ -145,7 +152,6 @@ class Game {
             player.image = image;
             context.drawImage(player.image, player.location.x, player.location.y);
             // must register after the image has been added (or add null check)
-            // TODO: move and draw should be decoupled
             assetMgr.onScriptLoad(ScriptAssets.seedrandom, function(script) {
                 let keyHandler = function(event) {
                     move(event, world, player);
