@@ -1,22 +1,16 @@
 // Copyright (c) 2020 eContriver LLC
 
-var dotXWorld = 0;
-var dotYWorld = 0;
 var visibleCanvas = null;
 var context = null;
-var dotImage = null;
-var minYWorld = 0;
-var maxYWorld = 640 * 80;
-var minXWorld = 0;
-var maxXWorld = 1040 * 80;
 
 const ScriptAssets = Object.freeze({
-    'seedrandom': 'seedrandom.js'
+    'seedrandom': 'seedrandom.js',
 });
 const ImageAssets = Object.freeze({
-    'dot': 'dot.png'
+    'dot': 'dot.png',
 });
 
+// TODO: Create Asset class the uses Promise
 class AssetMgr {
     constructor() {
         this.imagesPending = [];
@@ -32,7 +26,7 @@ class AssetMgr {
             if (this.scriptsLoaded.includes(script)) return;
             if (this.scriptsPending.includes(script)) return;
             this.scriptsPending.push(script);
-            loadScript(script, (function() {
+            this.loadScript(script, (function() {
                 const index = this.scriptsPending.indexOf(script);
                 this.scriptsLoaded.push(script); // let it exist in both briefly
                 this.scriptsPending.splice(index, 1); // remove it
@@ -45,10 +39,17 @@ class AssetMgr {
         this.runScriptCallbacks(script); // run callbacks now in case it was loaded
     }
     runScriptCallbacks(script) {
-        if (this.scriptCallbacks.has(script)) {
+        if (this.scriptCallbacks.has(script) && this.scriptsLoaded.includes(script)) {
             let func = this.scriptCallbacks.get(script); // and run it
             func(script);
         }
+    }
+    loadScript(file, func) {
+        let element = document.createElement('script');
+        element.addEventListener('load', func); // must set before src
+        element.type = 'text/javascript';
+        element.src = file;
+        document.getElementsByTagName("head")[0].appendChild(element);
     }
     addImages(srcs) {
         srcs.forEach(function(src){
@@ -68,29 +69,34 @@ class AssetMgr {
         this.runImageCallbacks(src);
     }
     runImageCallbacks(src) {
-        let func = this.imageCallbacks.get(src); // and run it
-        func(this.imageObjects.get(src));
+        if (this.imageCallbacks.has(src) && this.imagesLoaded.includes(src)) {
+            let func = this.imageCallbacks.get(src); // and run it
+            func(this.imageObjects.get(src));
+        }
     }
     loadImage(image, func) {
         let loader = new Image();
-        loader.src = image;
-        loader.onload = func;
+        loader.onload = func; // must set onload first
+        // loader.onerror = function() { throw "failed to load ${image}"; }
+        loader.src = image; // starts download the image now
         this.imageObjects.set(image, loader);
+    }
+}
+
+class EntityMgr {
+    constructor() {
+        this.entities = [];
+    }
+    create(type) {
+        let entity = new (type)();
+        this.entities.push(entity);
+        return entity;
     }
 }
 
 function sleep(durationMs){
     var now = new Date().getTime();
     while(new Date().getTime() < now + durationMs){ /* noop */ } 
-}
-
-function loadScript(file, func) {
-    sleep(2000);
-    let element = document.createElement('script');
-    element.type = 'text/javascript';
-    element.src = file;
-    element.addEventListener('load', func);
-    document.getElementsByTagName("head")[0].appendChild(element);
 }
 
 class Point {
@@ -103,9 +109,9 @@ class Point {
     }
 }
 
-class Character {
-    constructor(location) {
-        this.location = location;
+class Entity {
+    constructor() {
+        this.location = new Point(0, 0);
         this.image = null;
     }
 }
@@ -124,78 +130,77 @@ class World {
 class Game {
     constructor() {
         // only add member variables if the game owns the object
+        this.entityMgr = new EntityMgr();
     }
     run(assetMgr) {
         let world = new World(new Point(640 * 80, 1040 * 80));
         visibleCanvas = document.getElementById('game');
         visibleCanvas.style.backgroundColor = "lightgray";
-        // Set character starting location 
-        let dot = new Character(world.center()); // middle
-        //let dot = new Character(world.minX + 520, world.minY + 320); // min boundary
-        //let dot = new Character(world.maxX - 520, world.maxY - 320); // max boundary
-        // TODO: Move and draw should be decoupled
-        assetMgr.onScriptLoad(ScriptAssets.seedrandom, function(script) {
-            let keyHandler = function(event) {
-                move(event, assetMgr);
-            };
-            document.addEventListener("keydown", keyHandler); // TODO: move needs to get dot, 
-        });
+        // set character starting location 
+        let player = this.entityMgr.create(Entity);
+        player.location = world.center(); // middle
         // do we bind and add move to Char or how to add key bindign, that moves char, from hi level
         context = visibleCanvas.getContext('2d');
-        // TODO: Need assetMgr with after load...
         assetMgr.onImageLoad(ImageAssets.dot, function(image) {
-            dot.image = image;
-            context.drawImage(dot.image, dot.location.x, dot.location.y);
+            player.image = image;
+            context.drawImage(player.image, player.location.x, player.location.y);
+            // must register after the image has been added (or add null check)
+            // TODO: move and draw should be decoupled
+            assetMgr.onScriptLoad(ScriptAssets.seedrandom, function(script) {
+                let keyHandler = function(event) {
+                    move(event, world, player);
+                };
+                document.addEventListener("keydown", keyHandler); // TODO: move needs to get dot, 
+            });
         });
     }
 }
 
 
-function move(event, assetMgr) {
+function move(event, world, player) {
     context.clearRect(0, 0, visibleCanvas.width, visibleCanvas.height);
     var movementAmount = 10;
     switch (event.key) {
         case "w":
-            dotYWorld -= movementAmount;
+            player.location.y -= movementAmount;
             break;
         case "s":
-            dotYWorld += movementAmount;
+            player.location.y += movementAmount;
             break;
         case "a":
-            dotXWorld -= movementAmount;
+            player.location.x -= movementAmount;
             break;
         case "d":
-            dotXWorld += movementAmount;
+            player.location.x += movementAmount;
             break;
     }
-    let dotImage = assetMgr.imageObjects.get(ImageAssets.dot);
-    dotYWorld = (dotYWorld + dotImage.height > maxYWorld) ? maxYWorld - dotImage.height : dotYWorld;
-    dotYWorld = (dotYWorld < minYWorld) ? minYWorld : dotYWorld;
-    dotXWorld = (dotXWorld + dotImage.width > maxXWorld) ? maxXWorld - dotImage.width : dotXWorld;
-    dotXWorld = (dotXWorld < minXWorld) ? minXWorld : dotXWorld;
-    var canvasYWorld = dotYWorld - (visibleCanvas.height / 2);
-    var canvasXWorld = dotXWorld - (visibleCanvas.width / 2);
+    player.location.y = (player.location.y + player.image.height > world.max.y) ? world.max.y - player.image.height : player.location.y;
+    player.location.y = (player.location.y < world.min.y) ? world.min.y : player.location.y;
+    player.location.x = (player.location.x + player.image.width > world.max.x) ? world.max.x - player.image.width : player.location.x;
+    player.location.x = (player.location.x < world.min.x) ? world.min.x : player.location.x;
+    var canvasYWorld = player.location.y - (visibleCanvas.height / 2);
+    var canvasXWorld = player.location.x - (visibleCanvas.width / 2);
     var dotXCanvas = visibleCanvas.width / 2;
     var dotYCanvas = visibleCanvas.height / 2;
-    if (canvasYWorld < minYWorld) {
-        dotYCanvas += (canvasYWorld - minYWorld);
-        canvasYWorld = minYWorld;
+    if (canvasYWorld < world.min.y) {
+        dotYCanvas += (canvasYWorld - world.min.y);
+        canvasYWorld = world.min.y;
     }
-    if ((canvasYWorld + visibleCanvas.height) > maxYWorld) {
-        dotYCanvas += visibleCanvas.height - (maxYWorld - canvasYWorld);
-        canvasYWorld = maxYWorld - visibleCanvas.height;
+    if ((canvasYWorld + visibleCanvas.height) > world.max.y) {
+        dotYCanvas += visibleCanvas.height - (world.max.y - canvasYWorld);
+        canvasYWorld = world.max.y - visibleCanvas.height;
     }
-    if (canvasXWorld < minXWorld) {
-        dotXCanvas += (canvasXWorld - minXWorld);
-        canvasXWorld = minXWorld;
+    if (canvasXWorld < world.min.x) {
+        dotXCanvas += (canvasXWorld - world.min.x);
+        canvasXWorld = world.min.x;
     }
-    if ((canvasXWorld + visibleCanvas.width) > maxXWorld) {
-        dotXCanvas += visibleCanvas.width - (maxXWorld - canvasXWorld);
-        canvasXWorld = maxXWorld - visibleCanvas.width;
+    if ((canvasXWorld + visibleCanvas.width) > world.max.x) {
+        dotXCanvas += visibleCanvas.width - (world.max.x - canvasXWorld);
+        canvasXWorld = world.max.x - visibleCanvas.width;
     }
     generateRandom(canvasXWorld, canvasXWorld + visibleCanvas.width, canvasYWorld, canvasYWorld + visibleCanvas.height);
-    console.log("Moving to: " + dotXWorld + "," + dotYWorld);
-    context.drawImage(dotImage, dotXCanvas, dotYCanvas);
+    console.log("Moving to: " + player.location.x + "," + player.location.y);
+    context.drawImage(player.image, dotXCanvas, dotYCanvas);
     //event.preventDefault(); // prevents (F5 and) arrows from scrolling (with wasd we don't need this now)
 }
 
