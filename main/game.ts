@@ -1,23 +1,64 @@
-// Copyright (c) 2020 eContriver LLC
+// Copyright (c) 2020-2021 eContriver LLC
 
 var visibleCanvas = null;
 var context = null;
 
 const ScriptAssets = Object.freeze({
-    'seedrandom': 'seedrandom.js',
+    'seedrandom': 'build/ext/seedrandom.js',
 });
 const ImageAssets = Object.freeze({
-    'dot': 'dot.png',
+    'dot': 'build/resources/dot.png',
 });
 
 // TODO: Switch to TypeScript so we can use types and have interfaces
+// TODO: Add tests
 // TODO: Add Multi-layer support and separate draw from move logic
 // TODO: Add a GraphicalUserInterface which draws on a layer and accepts inputs
 // TODO: Add Box2D integration for physics
 // TODO: Add Server / Client setup
 
 // TODO: Create Asset class the uses Promise - https://web.dev/promises/
+interface Asset {
+    file: File;
+    onLoadCallback: (event: ProgressEvent) => void;
+    onProgressCallback: (event: ProgressEvent) => void;
+    onLoad(callback: (event: ProgressEvent) => void): void;
+    onProgress(callback: (event: ProgressEvent) => void): void;
+    load(): void;
+}
+class DefaultAsset implements Asset {
+    file: File;
+    onLoadCallback: (event: ProgressEvent) => void;
+    onProgressCallback: (event: ProgressEvent) => void;
+    constructor(filePath: string) {
+        this.file = new File([], filePath);
+    }
+    onLoad(callback: (event: ProgressEvent) => void) {
+        this.onLoadCallback = callback;
+    }
+    onProgress(callback: (event: ProgressEvent) => void) {
+        this.onProgressCallback = callback;
+    }
+    load() {
+        const reader = new FileReader();
+        reader.addEventListener('load', (event) => {
+            this.onLoadCallback(event);
+        });
+        reader.addEventListener('progress', (event) => {
+            this.onProgressCallback(event);
+        });
+        reader.readAsDataURL(this.file);
+    }
+}
+
 class AssetMgr {
+    imagesPending: any[];
+    imagesLoaded: any[];
+    imageObjects: Map<any, any>;
+    imageCallbacks: Map<any, any>;
+    scriptsPending: any[];
+    scriptsLoaded: any[];
+    scriptCallbacks: Map<any, any>;
     constructor() {
         this.imagesPending = [];
         this.imagesLoaded = [];
@@ -27,8 +68,8 @@ class AssetMgr {
         this.scriptsLoaded = [];
         this.scriptCallbacks = new Map();
     }
-    addScripts(scripts) {
-        scripts.forEach((function(script){
+    addScripts(scripts: any[]) {
+        scripts.forEach((function(script: any){
             if (this.scriptsLoaded.includes(script)) return;
             if (this.scriptsPending.includes(script)) return;
             this.scriptsPending.push(script);
@@ -40,25 +81,25 @@ class AssetMgr {
             }).bind(this));
         }).bind(this));
     }
-    onScriptLoad(script, func) {
+    onScriptLoad(script: any, func: any) {
         this.scriptCallbacks.set(script, func);
         this.runScriptCallbacks(script); // run callbacks now in case it was loaded
     }
-    runScriptCallbacks(script) {
+    runScriptCallbacks(script: any) {
         if (this.scriptCallbacks.has(script) && this.scriptsLoaded.includes(script)) {
             let func = this.scriptCallbacks.get(script); // and run it
             func(script);
         }
     }
-    loadScript(file, func) {
+    loadScript(file: string, func: (this: HTMLScriptElement, ev: Event) => any) {
         let element = document.createElement('script');
         element.addEventListener('load', func); // must set before src
         element.type = 'text/javascript';
         element.src = file;
         document.getElementsByTagName("head")[0].appendChild(element);
     }
-    addImages(srcs) {
-        srcs.forEach(function(src){
+    addImages(srcs: any[]) {
+        srcs.forEach(function(src: any){
             if (this.imagesLoaded.includes(src)) return;
             if (this.imagesPending.includes(src)) return;
             this.imagesPending.push(src);
@@ -70,17 +111,17 @@ class AssetMgr {
             }.bind(this));
         }.bind(this));
     }
-    onImageLoad(src, func) {
+    onImageLoad(src: any, func: any) {
         this.imageCallbacks.set(src, func);
         this.runImageCallbacks(src);
     }
-    runImageCallbacks(src) {
+    runImageCallbacks(src: any) {
         if (this.imageCallbacks.has(src) && this.imagesLoaded.includes(src)) {
             let func = this.imageCallbacks.get(src); // and run it
             func(this.imageObjects.get(src));
         }
     }
-    loadImage(image, func) {
+    loadImage(image: string, func: (this: GlobalEventHandlers, ev: Event) => any) {
         let loader = new Image();
         loader.onload = func; // must set onload first
         // loader.onerror = function() { throw "failed to load ${image}"; }
@@ -90,33 +131,38 @@ class AssetMgr {
 }
 
 class EntityMgr {
+    entities: any[];
     constructor() {
         this.entities = [];
     }
-    create(type) {
+    create(type: any) {
         let entity = new (type)();
         this.entities.push(entity);
         return entity;
     }
 }
 
-function sleep(durationMs){
+function sleep(durationMs: number){
     var now = new Date().getTime();
     while(new Date().getTime() < now + durationMs){ /* noop */ } 
 }
 
 class Point {
-    constructor(x, y) {
+    x: number;
+    y: number;
+    constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
-    midPoint(b) {
+    midPoint(b: { x: number; y: number; }) {
         return new Point((b.x - this.x) / 2, (b.y - this.y) / 2);
     }
 }
 
 // TODO: This is to become an interface and something like Character will implement it
 class Entity {
+    location: Point;
+    image: any;
     constructor() {
         this.location = new Point(0, 0);
         this.image = null;
@@ -124,7 +170,9 @@ class Entity {
 }
 
 class World {
-    constructor(max) {
+    max: Point;
+    min: Point;
+    constructor(max: Point) {
         this.max = max;
         this.min = new Point(0, 0);
     }
@@ -135,11 +183,12 @@ class World {
 }
 
 class Game {
+    entityMgr: EntityMgr;
     constructor() {
         // only add member variables if the game owns the object
         this.entityMgr = new EntityMgr();
     }
-    run(assetMgr) {
+    run(assetMgr: AssetMgr) {
         let world = new World(new Point(640 * 80, 1040 * 80));
         visibleCanvas = document.getElementById('game');
         visibleCanvas.style.backgroundColor = "lightgray";
@@ -148,12 +197,12 @@ class Game {
         player.location = world.center(); // middle
         // do we bind and add move to Char or how to add key bindign, that moves char, from hi level
         context = visibleCanvas.getContext('2d');
-        assetMgr.onImageLoad(ImageAssets.dot, function(image) {
+        assetMgr.onImageLoad(ImageAssets.dot, function(image: any) {
             player.image = image;
             context.drawImage(player.image, player.location.x, player.location.y);
             // must register after the image has been added (or add null check)
-            assetMgr.onScriptLoad(ScriptAssets.seedrandom, function(script) {
-                let keyHandler = function(event) {
+            assetMgr.onScriptLoad(ScriptAssets.seedrandom, function(script: any) {
+                let keyHandler = function(event: any) {
                     move(event, world, player);
                 };
                 document.addEventListener("keydown", keyHandler); // TODO: move needs to get dot, 
@@ -163,7 +212,7 @@ class Game {
 }
 
 
-function move(event, world, player) {
+function move(event: { key: any; }, world: World, player: { location: { y: number; x: number; }; image: { height: number; width: number; }; }) {
     context.clearRect(0, 0, visibleCanvas.width, visibleCanvas.height);
     var movementAmount = 10;
     switch (event.key) {
@@ -210,7 +259,7 @@ function move(event, world, player) {
     //event.preventDefault(); // prevents (F5 and) arrows from scrolling (with wasd we don't need this now)
 }
 
-function generateRandom(xStart, xEnd, yStart, yEnd) {
+function generateRandom(xStart: number, xEnd: number, yStart: number, yEnd: number) {
     // console.time(generateRandom.name)
     for (var x = xStart; x < xEnd; x += 1) {
         for (var y = yStart; y < yEnd; y += 1) {
@@ -221,7 +270,7 @@ function generateRandom(xStart, xEnd, yStart, yEnd) {
             // var rand = PRNG(x << 16 + y) % 256; // we use modulo 256 because 255 would produe a 0 for 255 (i.e. 0-254), we want 0-255
 
             // Implementation 2: using seedrandom.js (3100ms for 600,000 and very random)
-            Math.seedrandom(x + ',' + y);
+            (Math as any).seedrandom(x + ',' + y);
             var rand = (Math.random() * Number.MAX_SAFE_INTEGER) >>> 0; // shift by 0 truncates decimal
 
             if ((rand % 10) > 1) continue;
@@ -247,7 +296,7 @@ function generateRandom(xStart, xEnd, yStart, yEnd) {
 // }
 
 // Took over 300 ms to generate for 1040-40 x 640-40
-function colorPixel(x, y, size, r, g, b, a) {
+function colorPixel(x: number, y: number, size: number, r: string | number, g: string | number, b: string | number, a: number) {
     context.fillStyle = "rgba(" + r + "," + g + "," + b + "," + (a / 255) + ")";
     context.fillRect(x, y, size, size);
 }

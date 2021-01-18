@@ -1,0 +1,150 @@
+# Copyright (c) 2021 eContriver LLC
+#
+# Start IDE with:
+#   docker-compose up
+# Build images with:
+#   docker-compose build
+# Run shell commands with (presuming ide container started):
+#   docker-compose exec ide bash
+# Run shell commands with (presuming contaienrs failed to start):
+#   docker run --rm -it ts_deps:latest bash
+# Stop and teardown all associated containers etc.
+#   docker-compose down
+# Run with
+#   docker-compose run idea
+# Create volumes
+#   docker volume create --driver local --opt type=cifs --opt device=//192.168.2.235/private/projects/JS_WASD_Game --opt o=username=user,password=pw JS_WASD_Game
+#   docker volume create --driver local --opt type=cifs --opt device=//192.168.2.235/private/projects/JS_WASD_Game.opt --opt o=username=user,password=pw JS_WASD_Game.opt
+#   docker volume create --driver local --opt type=cifs --opt device=//192.168.2.235/private/projects/JS_WASD_Game.root --opt o=username=user,password=pw JS_WASD_Game.root
+#   docker volume rm JS_WASD_Game.vscode && docker volume create --driver local --opt type=cifs --opt device=//192.168.2.235/private/projects/JS_WASD_Game.vscode --opt o=username=user,password=pw,uid=1000,gid=1000 JS_WASD_Game.vscode
+#   docker volume create vscode
+# Test volumes
+#   docker volume rm JS_WASD_Game && docker volume create --driver local --opt type=cifs --opt device=//192.168.2.235/private/projects/JS_WASD_Game --opt o=username=user,password=pw JS_WASD_Game
+#   docker run --rm -it -v JS_WASD_Game:/JS_WASD_Game/ android_deps bash -c "ls -la /JS_WASD_Game && touch /JS_WASD_Game/test-`date +%s` && ls -la /JS_WASD_Game"
+
+
+version: "3.8"
+
+services:
+  ts_deps:
+    image: ts_deps:latest
+    build: 
+      context: .
+      dockerfile: ./infra/Dockerfile
+  bash:
+   image: ts_deps:latest
+   stdin_open: true # docker run -i
+   tty: true # docker run -t
+   depends_on: 
+     - ts_deps
+  #  environment: 
+  #    DISPLAY: 192.168.2.110:0
+  #    DONT_PROMPT_WSL_INSTALL: 1
+   volumes:
+     - type: volume
+       source: JS_WASD_Game
+       target: /JS_WASD_Game/
+    #  - type: volume
+    #    source: vscode
+    #    target: /home/vscode/
+    #  - type: volume
+    #    source: JS_WASD_Game.root
+    #    target: /root/
+    #  - type: volume
+    #    source: JS_WASD_Game.opt
+    #    target: /opt/
+   command:
+     bash
+  compile:
+    image: ts_deps:latest
+    depends_on: 
+      - ts_deps
+    volumes:
+      - type: volume
+        source: JS_WASD_Game
+        target: /JS_WASD_Game/
+      # - type: volume
+      #   source: vscode
+      #   target: /home/vscode/
+      # - type: volume
+      #   source: JS_WASD_Game.root
+      #   target: /root/
+      # - type: volume
+      #   source: JS_WASD_Game.opt
+      #   target: /opt/
+    working_dir: /JS_WASD_Game
+    command:
+      bash -c 'tsc -b --pretty && cp -f main/index.html build/main && (mkdir build/ext; cp -f ext/seedrandom.js build/ext) && (mkdir build/resources; cp -f resources/dot.png build/resources)'
+      # --generateCpuProfile tsc-output.cpuprofile
+  test:
+    image: ts_deps:latest
+    depends_on: 
+      - ts_deps
+    volumes:
+      - type: volume
+        source: JS_WASD_Game
+        target: /JS_WASD_Game/
+      # - type: volume
+      #   source: vscode
+      #   target: /home/vscode/
+      # - type: volume
+      #   source: JS_WASD_Game.root
+      #   target: /root/
+      # - type: volume
+      #   source: JS_WASD_Game.opt
+      #   target: /opt/
+    working_dir: /JS_WASD_Game
+    command:
+      bash -c 'tsc -b --pretty && node ./build/test/game_test.js'
+  # install:
+  #   image: ts_deps:latest
+  #   depends_on: 
+  #     - ts_deps
+  #   volumes:
+  #     - type: volume
+  #       source: JS_WASD_Game
+  #       target: /JS_WASD_Game/
+  #     # - type: volume
+  #     #   source: vscode
+  #     #   target: /home/vscode/
+  #     # - type: volume
+  #     #   source: JS_WASD_Game.root
+  #     #   target: /root/
+  #     # - type: volume
+  #     #   source: JS_WASD_Game.opt
+  #     #   target: /opt/
+  #   command:
+  #     bash -c "/JS_WASD_Game/infra/install-tools.sh"
+  # ide:
+  #   image: ts_deps:latest
+  #   depends_on: 
+  #     - ts_deps
+  #   environment: 
+  #     DISPLAY: 192.168.2.110:0
+  #     DONT_PROMPT_WSL_INSTALL: 1
+  #   ports:
+  #     - '5555:5555'
+  #   volumes:
+  #     - type: volume
+  #       source: JS_WASD_Game
+  #       target: /JS_WASD_Game/
+  #     - type: volume
+  #       source: vscode
+  #       target: /home/vscode/
+  #     - type: volume
+  #       source: JS_WASD_Game.root
+  #       target: /root/
+  #     - type: volume
+  #       source: JS_WASD_Game.opt
+  #       target: /opt/
+  #   command:
+  #     su vscode -c 'code -w /JS_WASD_Game --verbose'
+volumes:
+  JS_WASD_Game:
+    external: true
+  # vscode:
+  #   external: true
+  # JS_WASD_Game.root:
+  #   external: true
+  # JS_WASD_Game.opt:
+  #   external: true
