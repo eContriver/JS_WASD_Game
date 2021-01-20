@@ -1,6 +1,9 @@
 // Copyright (c) 2021 eContriver LLC
 
-/// <reference path="../main/game.ts" />
+// <reference path="../src/game.ts" />
+
+import { Asset } from '../src/Asset';
+import { DefaultAsset } from '../src/DefaultAsset';
 
 class TestRunner {
     runTests() {

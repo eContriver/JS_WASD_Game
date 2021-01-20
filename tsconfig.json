@@ -1,11 +1,18 @@
 {
     "compilerOptions": {
-        "outDir": "./build",
+        "outDir": "./dist",
+        // "noImplicitAny": true,
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "module": "es6",
+        "target": "es5",
+        // "jsx": "react",
         // "allowJs": true,
+        "moduleResolution": "Node",
         "lib": [
             "es2020",
             "DOM",
         ],
-        // "sourceMap": true
-    },
+    }
 }

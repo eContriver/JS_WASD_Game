@@ -30,8 +30,8 @@ RUN apt-get update && apt-get install -y \
 
 ####
 # NPM Install
-RUN npm install -g typescript
-# RUN npm install -g webpack webpack-cli ts-loader 
+# RUN npm install -g typescript
+RUN npm install -g webpack webpack-cli typescript ts-loader seedrandom
 
 ####
 # Add vscode user as VSCode doesn't play well with root
