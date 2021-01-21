@@ -92,12 +92,10 @@ class Game {
             player.image = image;
             context.drawImage(player.image, player.location.x, player.location.y);
             // must register after the image has been added (or add null check)
-            // assetMgr.onScriptLoad(ScriptAssets.seedrandom, function(script: any) {
-                let keyHandler = function(event: any) {
-                    move(event, world, player);
-                };
-                document.addEventListener("keydown", keyHandler); // TODO: move needs to get dot, 
-            // });
+            let keyHandler = function(event: any) {
+                move(event, world, player);
+            };
+            document.addEventListener("keydown", keyHandler); // TODO: move needs to get dot, 
         });
     }
 }

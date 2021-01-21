@@ -2,14 +2,26 @@ const path = require('path');
 // const HtmlWebpackPlugin = require('html-webpack-plugin'); //installed via npm
 // const webpack = require('webpack');
 
+let glob = require("glob");
+
+let entry = __dirname + "/src/game.ts";
+let outputPath = __dirname + "/dist/";
+let devtool = "";
+
+if (process.env.TESTBUILD) {
+  entry = glob.sync(__dirname + "/test/*.test.ts");
+  outputPath = __dirname + "/test-dist/";
+  devtool = "source-map";
+}
+
 module.exports = {
-  entry: './src/game.ts',
-  devtool: 'inline-source-map',
+  entry: entry, //'./src/game.ts',
+  devtool: devtool, //'inline-source-map',
   mode: 'development',
   target: 'web',
   output: {
-    filename: 'main.js',
-    path: path.resolve(__dirname, 'dist'),
+    // filename: 'main.js',
+    path: outputPath //path.resolve(__dirname, 'dist'),
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json']
