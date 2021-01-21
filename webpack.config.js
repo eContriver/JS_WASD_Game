@@ -1,6 +1,6 @@
 const path = require('path');
 // const HtmlWebpackPlugin = require('html-webpack-plugin'); //installed via npm
-const webpack = require('webpack');
+// const webpack = require('webpack');
 
 module.exports = {
   entry: './src/game.ts',

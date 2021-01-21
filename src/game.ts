@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 eContriver LLC
 
-import Alea from 'alea';
+// import Alea from 'alea';
 // import { seedrandom } from 'seedrandom';
 import { AssetMgr } from './AssetMgr';
 
@@ -161,12 +161,16 @@ function generateRandom(xStart: number, xEnd: number, yStart: number, yEnd: numb
             // var rand = PRNG(x << 16 + y) % 256; // we use modulo 256 because 255 would produe a 0 for 255 (i.e. 0-254), we want 0-255
 
             // Implementation 2: using seedrandom.js (3100ms for 600,000 and very random)
-            // let rng = new Math.seedrandom(x + ',' + y);
-            // var rand = (rng() * Number.MAX_SAFE_INTEGER) >>> 0; // shift by 0 truncates decimal
+            // let rng = Math.seedrandom(x + ',' + y);
+            // var rand = (Math.random() * Number.MAX_SAFE_INTEGER) >>> 0; // shift by 0 truncates decimal
+            // beyond v3.+ https://www.npmjs.com/package/seedrandom#cjs--nodejs-usage
+            var seedrandom = require('seedrandom');
+            let rng = seedrandom(x + ',' + y);
+            var rand = (rng() * Number.MAX_SAFE_INTEGER) >>> 0; // shift by 0 truncates decimal
 
             // Implementation 3: using alea.js (?ms for 600,000 and very random)
-            let rng = Alea(x + ',' + y);
-            var rand = (rng() * Number.MAX_SAFE_INTEGER) >>> 0; // shift by 0 truncates decimal
+            // let rng = Alea(x + ',' + y);
+            // let rand: number = Math.round(rng() * Number.MAX_SAFE_INTEGER);
 
             if ((rand % 10) > 1) continue;
             var r = ((rand >>> 0) % 2) * 255;
