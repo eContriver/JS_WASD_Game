@@ -55,7 +55,7 @@ services:
     #    target: /opt/
    command:
      bash
-  compile:
+  build:
     image: ts_deps:latest
     depends_on: 
       - ts_deps
@@ -74,7 +74,8 @@ services:
       #   target: /opt/
     working_dir: /JS_WASD_Game
     command:
-      bash -c 'tsc -b --pretty && cp -f main/index.html build/main && (mkdir build/ext; cp -f ext/seedrandom.js build/ext) && (mkdir build/resources; cp -f resources/dot.png build/resources)'
+      npm run build
+      # bash -c 'tsc -b --pretty && cp -f main/index.html build/main && (mkdir build/ext; cp -f ext/seedrandom.js build/ext) && (mkdir build/resources; cp -f resources/dot.png build/resources)'
       # --generateCpuProfile tsc-output.cpuprofile
   test:
     image: ts_deps:latest
@@ -95,7 +96,8 @@ services:
       #   target: /opt/
     working_dir: /JS_WASD_Game
     command:
-      bash -c 'tsc -b --pretty && node ./build/test/game_test.js'
+      npm run test
+      # bash -c 'tsc -b --pretty && node ./build/test/game_test.js'
   # install:
   #   image: ts_deps:latest
   #   depends_on: 

@@ -2,11 +2,11 @@ const path = require('path');
 // const HtmlWebpackPlugin = require('html-webpack-plugin'); //installed via npm
 // const webpack = require('webpack');
 
-let glob = require("glob");
+const glob = require("glob");
 
-let entry = __dirname + "/src/game.ts";
+let entry = __dirname + "/src/main.ts";
 let outputPath = __dirname + "/dist/";
-let devtool = "";
+let devtool = null
 
 if (process.env.TESTBUILD) {
   entry = glob.sync(__dirname + "/test/*.test.ts");

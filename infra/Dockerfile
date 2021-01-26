@@ -31,18 +31,18 @@ RUN apt-get update && apt-get install -y \
 ####
 # NPM Install
 # RUN npm install -g typescript
-RUN npm install -g webpack webpack-cli typescript ts-loader seedrandom
+RUN npm install -g webpack webpack-cli typescript ts-loader seedrandom ts-node
 
 ####
 # Add vscode user as VSCode doesn't play well with root
-RUN adduser --disabled-password vscode
-# RUN chown vscode:vscode /home/vscode
-RUN echo 'vscode  ALL=(ALL) /bin/su' >>  /etc/sudoers
+#RUN adduser --disabled-password vscode
+## RUN chown vscode:vscode /home/vscode
+#RUN echo 'vscode  ALL=(ALL) /bin/su' >>  /etc/sudoers
 
 ####
 # VS Code Install
-RUN curl https://az764295.vo.msecnd.net/stable/ea3859d4ba2f3e577a159bc91e3074c5d85c0523/code_1.52.1-1608136922_amd64.deb > /tmp/install.deb
-RUN apt install -y /tmp/install.deb && apt-get clean && apt-get purge
+#RUN curl https://az764295.vo.msecnd.net/stable/ea3859d4ba2f3e577a159bc91e3074c5d85c0523/code_1.52.1-1608136922_amd64.deb > /tmp/install.deb
+#RUN apt install -y /tmp/install.deb && apt-get clean && apt-get purge
 
 ####
 # Index

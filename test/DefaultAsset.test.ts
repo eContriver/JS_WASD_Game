@@ -28,11 +28,33 @@ import { DefaultAsset } from '../src/DefaultAsset';
 // 
 // test();
 
-import {expect} from "chai";
-describe("constructsDefaultAsset", function() {
-  it("checks that we can create a new DefaultAsset", function() {
-    expect(new DefaultAsset("testlet.js")).to.equal(null);
-  });
+// import {describe} from "mocha";
+import {assert} from "chai";
+// var assert = require("assert");
+describe("DefaultAsset", function() {
+    let asset: Asset = null;
+    let callbackExecuted = false;
+    it("checks that constructor works", function () {
+        asset = new DefaultAsset("../resources/dot.png");
+    });
+    it("checks that callback is not executed before asset is loaded", function () {
+        asset.addCallback(function () {
+            callbackExecuted = true;
+        });
+        assert.equal(callbackExecuted, false);
+    });
+    it("checks that callback is executed when asset is loaded", function () {
+        asset.loaded = true;
+        asset.executeCallbacks();
+        assert.equal(callbackExecuted, true);
+    });
+    it("checks that callback is executed immediately when arleady loaded", function () {
+        let immediatelyExecuted = false;
+        asset.addCallback(function () {
+            immediatelyExecuted = true;
+        });
+        assert.equal(immediatelyExecuted, true);
+    });
 });
 // describe("sortByDistance", function() {
 //   it("sortsByDistance", function() {

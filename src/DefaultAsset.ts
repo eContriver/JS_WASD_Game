@@ -3,26 +3,27 @@
 import { Asset } from './Asset';
 
 export class DefaultAsset implements Asset {
-    file: File;
-    onLoadCallback: (event: ProgressEvent) => void;
-    onProgressCallback: (event: ProgressEvent) => void;
-    constructor(filePath: string) {
-        this.file = new File([], filePath);
+    loaded: boolean = false;
+    object: any = null;
+    callbacks: Array<any> = [];
+    
+    constructor(obj) {
+        this.loaded = false;
+        this.object = obj;
     }
-    onLoad(callback: (event: ProgressEvent) => void) {
-        this.onLoadCallback = callback;
+    
+    addCallback(callback) {
+        this.callbacks.push(callback);
+        this.executeCallbacks();
     }
-    onProgress(callback: (event: ProgressEvent) => void) {
-        this.onProgressCallback = callback;
-    }
-    load() {
-        const reader = new FileReader();
-        reader.addEventListener('load', (event) => {
-            this.onLoadCallback(event);
-        });
-        reader.addEventListener('progress', (event) => {
-            this.onProgressCallback(event);
-        });
-        reader.readAsDataURL(this.file);
+
+    executeCallbacks() {
+        if (!this.loaded) {
+            return;
+        }
+        while (this.callbacks.length > 0) {
+            var callback = this.callbacks.pop();
+            callback();
+        }
     }
 }
