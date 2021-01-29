@@ -21,6 +21,10 @@
                 "--no-timeouts",
                 // "--timeout",
                 // "999999",
+                "--require",
+                "source-map-support/register",
+                "--require",
+                "jsdom-global/register",
                 "--recursive",
                 "--colors",
                 "${workspaceFolder}/test-dist"
@@ -28,12 +32,6 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            // "cwd": "${workspaceRoot}",
-            // "sourceMapPathOverrides": {
-            //     "meteor://💻app/*": "${workspaceFolder}/*",
-            //     "webpack:///./~/*": "${workspaceFolder}/node_modules/*",
-            //     "webpack://?:*/*": "${workspaceFolder}/*"
-            // },
             "internalConsoleOptions": "openOnSessionStart",
             // "outFiles": [
             //     "${workspaceFolder}/test-dist/main.js"
@@ -42,136 +40,8 @@
                 "${workspaceFolder}/**"
             ],
             "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/JS_WASD_Game"
-        },
-        {
-            "name": "Launch localhost",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost/mypage.html",
-            "webRoot": "${workspaceFolder}/wwwroot"
-        },
-        {
-            "name": "Launch index.html",
-            "type": "chrome",
-            "request": "launch",
-            "file": "${workspaceFolder}/index.html"
-        },
-        {
-            "name": "Attach Debugger",
-            "type": "node",
-            "request": "attach",
-            "port": 5858,
-            "address": "localhost",
-            "restart": true,
-            "sourceMaps": true,
-            "outFiles": [],
-            "localRoot": "${workspaceRoot}",
-            "remoteRoot": null
-        },
-        {
-            "type": "chrome",
-            "request": "launch",
-            "name": "vuejs: chrome",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}",
-            "breakOnLoad": true,
-            "sourceMaps": true,
-            "disableNetworkCache": true,
-            "sourceMapPathOverrides": {
-                "webpack:///*": "${webRoot}/*",
-                "webpack:///./*": "${webRoot}/*",
-                "webpack:///src/*": "${webRoot}/src/*"
-            }
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Mocha Tests",
-            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "--inspect-brk",
-                "test-dist/main.js",
-            ],
-            "outFiles": ["test-dist/main.js"],
-            "port": 9229,
-            "internalConsoleOptions": "openOnSessionStart"
-        },
-        {
-            "name": "Run mocha-webpack",
-            "type": "node",
-            "request": "launch",
-            "program": "${workspaceRoot}/node_modules/mocha-webpack/bin/mocha-webpack",
-            "args": [
-                "--debug-brk",
-                "5858",
-                "--timeout",
-                "120000",
-                "--webpack-config",
-                "${workspaceRoot}/webpack.config.test.js",
-                "--require",
-                "test/setup.js",
-                "${file}"
-            ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "cwd": "${workspaceRoot}",
-            "preLaunchTask": null,
-            "runtimeExecutable": null,
-            "runtimeArgs": [],
-            "env": {
-                "NODE_ENV": "test"
-            },
-            "console": "integratedTerminal",
-            "outFiles": []
-        },
-        {
-            "name": "Launch via NPM",
-            "request": "launch",
-            "sourceMaps": true,
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run",
-                "test"
-            ],
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "pwa-node"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Tests",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "sourceMaps": true,
-            "env": {
-                "TESTBUILD": "true"
-            },
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "test-dist/main.js",
-                "--require",
-                "ts-node/register",
-                "--timeout",
-                "999999",
-                "--colors"
-                // "source-map-support/register"
-            ],
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen",
-            "protocol": "inspector",
-            "preLaunchTask": "buildTests" //,
-            // "postDebugTask": "cleanTests"
-        },
-        {
-            "type": "pwa-chrome",
-            "request": "launch",
-            "name": "Launch Chrome against localhost",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}"
+            "remoteRoot": "/JS_WASD_Game",
+            "preLaunchTask": "buildTests"
         }
     ]
 }

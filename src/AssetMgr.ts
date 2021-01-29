@@ -1,85 +1,85 @@
-// Copyright (c) 2020-2021 eContriver LLC
+// Copyright (c) 2021 eContriver LLC
+
+import { Asset } from './Asset';
+import { ImageAsset } from './ImageAsset';
+
+export enum AssetType {
+    UNKNOWN = -1,
+    IMAGE,
+    JAVASCRIPT,
+    JSON,
+    CSS,
+}
 
 export class AssetMgr {
-    imagesPending: any[];
-    imagesLoaded: any[];
-    imageObjects: Map<any, any>;
-    imageCallbacks: Map<any, any>;
-    scriptsPending: any[];
-    scriptsLoaded: any[];
-    scriptCallbacks: Map<any, any>;
+    assets: Map<string, Asset> = new Map();
+    handlers: Map<AssetType, new(p: any) => Asset> = new Map();
+    
     constructor() {
-        this.imagesPending = [];
-        this.imagesLoaded = [];
-        this.imageObjects = new Map();
-        this.imageCallbacks = new Map();
-        this.scriptsPending = [];
-        this.scriptsLoaded = [];
-        this.scriptCallbacks = new Map();
+        this.assets = new Map();
+        this.handlers.set(AssetType.IMAGE, ImageAsset);
     }
-    addScripts(scripts: any[]) {
-        scripts.forEach((function (script: any) {
-            if (this.scriptsLoaded.includes(script))
-                return;
-            if (this.scriptsPending.includes(script))
-                return;
-            this.scriptsPending.push(script);
-            this.loadScript(script, (function () {
-                const index = this.scriptsPending.indexOf(script);
-                this.scriptsLoaded.push(script); // let it exist in both briefly
-                this.scriptsPending.splice(index, 1); // remove it
-                this.runScriptCallbacks(script); // run callbacks as they were
-            }).bind(this));
-        }).bind(this));
-    }
-    onScriptLoad(script: any, func: any) {
-        this.scriptCallbacks.set(script, func);
-        this.runScriptCallbacks(script); // run callbacks now in case it was loaded
-    }
-    runScriptCallbacks(script: any) {
-        if (this.scriptCallbacks.has(script) && this.scriptsLoaded.includes(script)) {
-            let func = this.scriptCallbacks.get(script); // and run it
-            func(script);
+    
+    static getAssetType(path: string) {
+        if (path.indexOf('.jpg') != -1
+            || path.indexOf('.jpeg') != -1
+            || path.indexOf('.png') != -1
+            || path.indexOf('.gif') != -1
+            || path.indexOf('.wp') != -1) {
+            return AssetType.IMAGE;
         }
-    }
-    loadScript(file: string, func: (this: HTMLScriptElement, ev: Event) => any) {
-        let element = document.createElement('script');
-        element.addEventListener('load', func); // must set before src
-        element.type = 'text/javascript';
-        element.src = file;
-        document.getElementsByTagName("head")[0].appendChild(element);
-    }
-    addImages(srcs: any[]) {
-        srcs.forEach(function (src: any) {
-            if (this.imagesLoaded.includes(src))
-                return;
-            if (this.imagesPending.includes(src))
-                return;
-            this.imagesPending.push(src);
-            this.loadImage(src, function () {
-                const index = this.imagesPending.indexOf(src);
-                this.imagesLoaded.push(src); // let it exist in both briefly
-                this.imagesPending.splice(index, 1); // remove it
-                this.runImageCallbacks(src);
-            }.bind(this));
-        }.bind(this));
-    }
-    onImageLoad(src: any, func: any) {
-        this.imageCallbacks.set(src, func);
-        this.runImageCallbacks(src);
-    }
-    runImageCallbacks(src: any) {
-        if (this.imageCallbacks.has(src) && this.imagesLoaded.includes(src)) {
-            let func = this.imageCallbacks.get(src); // and run it
-            func(this.imageObjects.get(src));
-        }
-    }
-    loadImage(image: string, func: (this: GlobalEventHandlers, ev: Event) => any) {
-        let loader = new Image();
-        loader.onload = func; // must set onload first
 
-        // loader.onerror = function() { throw "failed to load ${image}"; }
-        loader.src = image; // starts download the image now
-        this.imageObjects.set(image, loader);
+        if (path.indexOf('.js') != -1) {
+            return AssetType.JAVASCRIPT;
+        }
+
+        if (path.indexOf('.json') != -1) {
+            return AssetType.JSON;
+        }
+
+        if (path.indexOf('.css') != -1) {
+            return AssetType.CSS;
+        }
+
+        return AssetType.UNKNOWN;
+    }
+
+    assignHandler<T extends Asset>(type: AssetType, handler: new(p: any) => T) {
+        this.handlers[type] = handler;
+    }
+
+    loadList(paths, callback): void {
+        paths.map(function (path) {
+            this.load(path, callback);
+        });
+    }
+
+    load(path: string, callback: any): Asset {
+        let asset: Asset = this.assets[path] ? this.assets[path] : null;
+        if (asset == null) {
+            let type: AssetType = AssetMgr.getAssetType(path);
+            if (!this.handlers[type]) {
+                throw new Error("No handler assigned to asset type for: " + path);
+            }
+            let handler: new(p: any) => Asset = this.handlers[type];
+            asset = new handler(path);
+            if (callback) {
+                asset.addCallback(callback);
+            }
+            this.assets.set(path, asset);
+            // switch (AssetMgr.getAssetType(path)) {
+            //     case AssetType.IMAGE:
+            //         asset = new ImageAsset(path);
+            //         if (callback) {
+            //             asset.addCallback(callback);
+            //         }
+            //         this.assets.set(path, asset);
+            //         break;
+            //     default:
+            //         throw new Error("No handler assigned to asset type for: " + path);
+            //         break;
+            // }
+        }
+        return asset;
     }
 }

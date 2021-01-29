@@ -2,8 +2,7 @@
 
 export interface Asset {
     loaded: boolean;
-    object: any;
-    callbacks: any[];
+    callbacks: Array<any>;
 
     addCallback: (callback) => void;
     executeCallbacks: () => void;

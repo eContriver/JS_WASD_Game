@@ -2,7 +2,7 @@
 
 // import Alea from 'alea';
 // import { seedrandom } from 'seedrandom';
-import { AssetMgr } from './AssetMgr';
+import { AssetMgrOld } from './AssetMgrOld';
 
 var visibleCanvas = null;
 var context = null;
@@ -14,8 +14,6 @@ const ImageAssets = Object.freeze({
     'dot': '../resources/dot.png',
 });
 
-// TODO: Switch to TypeScript so we can use types and have interfaces
-// TODO: Add tests
 // TODO: Add Multi-layer support and separate draw from move logic
 // TODO: Add a GraphicalUserInterface which draws on a layer and accepts inputs
 // TODO: Add Box2D integration for physics
@@ -79,7 +77,7 @@ class Game {
         // only add member variables if the game owns the object
         this.entityMgr = new EntityMgr();
     }
-    run(assetMgr: AssetMgr) {
+    run(assetMgr: AssetMgrOld) {
         let world = new World(new Point(640 * 80, 1040 * 80));
         visibleCanvas = document.getElementById('game');
         visibleCanvas.style.backgroundColor = "lightgray";
@@ -210,7 +208,7 @@ function colorPixel2(x, y) {
 }//*/
 
 function main() {
-    let assetMgr = new AssetMgr();
+    let assetMgr = new AssetMgrOld();
     assetMgr.addScripts(Object.values(ScriptAssets));
     assetMgr.addImages(Object.values(ImageAssets));
     // document.addEventListener("DOMContentLoaded" - the whole document (HTML) has been loaded.

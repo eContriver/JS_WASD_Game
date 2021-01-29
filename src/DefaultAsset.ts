@@ -1,28 +1,27 @@
 // Copyright (c) 2020-2021 eContriver LLC
 
-import { Asset } from './Asset';
+import { Asset } from "./Asset";
 
-export class DefaultAsset implements Asset {
-    loaded: boolean = false;
-    object: any = null;
-    callbacks: Array<any> = [];
-    
-    constructor(obj) {
+export abstract class DefaultAsset implements Asset {
+    loaded: boolean = null;
+    callbacks: Array<any> = null;
+
+    constructor() {
         this.loaded = false;
-        this.object = obj;
+        this.callbacks = new Array();
     }
-    
-    addCallback(callback) {
+
+    addCallback(callback): void {
         this.callbacks.push(callback);
         this.executeCallbacks();
     }
 
-    executeCallbacks() {
+    executeCallbacks(): void {
         if (!this.loaded) {
             return;
         }
         while (this.callbacks.length > 0) {
-            var callback = this.callbacks.pop();
+            let callback = this.callbacks.pop();
             callback();
         }
     }
